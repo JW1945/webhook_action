@@ -1,0 +1,19 @@
+name: CD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Trigger deployment webhook
+      env:
+        WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+      run: |
+        curl -X POST $WEBHOOK_URL \
+        -H "Content-Type: application/json" \
+        -H "X-Hub-Signature-256: sha256=$(echo -n "${{ github.event.head_commit.message }}" | openssl dgst -sha256 -hmac "$WEBHOOK_SECRET" | sed 's/^.* //')" \
+        -d '{"ref":"${{ github.ref }}", "repository":{"url":"${{ github.event.repository.url }}"}}'
